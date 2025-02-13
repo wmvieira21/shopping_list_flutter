@@ -3,6 +3,7 @@ import 'package:shopping_list/data/categories.dart';
 import 'package:shopping_list/enum/categories.dart';
 import 'package:shopping_list/models/category.dart';
 import 'package:shopping_list/models/grocery_item.dart';
+import 'package:shopping_list/services/grocery_service.dart';
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -18,17 +19,27 @@ class _NewItemState extends State<NewItem> {
   String _enteredName = '';
   int _enteredQuantity = 1;
   Category _selectedCategory = categoriesData[Categories.carbs]!;
+  final GroceryService groceryService = GroceryService();
 
   void _onSave() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      Navigator.of(context).pop(
-        GroceryItem(
-            id: DateTime.now().toString(),
-            name: _enteredName,
-            quantity: _enteredQuantity,
-            category: _selectedCategory),
-      );
+
+      GroceryItem item = GroceryItem(
+          id: DateTime.now().toString(),
+          name: _enteredName,
+          quantity: _enteredQuantity,
+          category: _selectedCategory);
+
+      groceryService.groceryItemPost(item).then((value) {
+        Navigator.of(context).pop();
+      }).catchError((e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("An error has occured: ${e.toString()}"),
+          ),
+        );
+      });
     }
   }
 

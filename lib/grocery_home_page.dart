@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shopping_list/models/grocery_item.dart';
+import 'package:shopping_list/services/grocery_service.dart';
 import 'package:shopping_list/widgets/grocery_list.dart';
 import 'package:shopping_list/widgets/new_item.dart';
 import 'package:shopping_list/widgets/no_data_found.dart';
@@ -12,28 +13,38 @@ class GroceryHomePage extends StatefulWidget {
 }
 
 class _GroceryHomePageState extends State<GroceryHomePage> {
-  List<GroceryItem> _groceriesList = [];
+  final List<GroceryItem> _groceriesList = [];
+  final GroceryService groceryService = GroceryService();
+
+  get loadSavedGroceries {
+    _groceriesList.clear();
+    return groceryService.groceryItemGet().then((value) {
+      setState(() {
+        _groceriesList.addAll(value);
+      });
+    });
+  }
 
   void _addItem() {
     Navigator.of(context)
         .push<GroceryItem>(
-      MaterialPageRoute(
-        builder: (context) => NewItem(),
-      ),
-    )
-        .then((value) {
-      if (value != null) {
-        setState(() {
-          _groceriesList.add(value);
-        });
-      }
-    });
+          MaterialPageRoute(
+            builder: (context) => NewItem(),
+          ),
+        )
+        .then((value) => loadSavedGroceries);
   }
 
   void _deleteItem(GroceryItem item) {
     setState(() {
       _groceriesList.remove(item);
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadSavedGroceries;
   }
 
   @override
