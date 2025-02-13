@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:shopping_list/data/categories.dart';
 import 'package:shopping_list/enum/categories.dart';
 import 'package:shopping_list/models/category.dart';
@@ -31,8 +34,18 @@ class _NewItemState extends State<NewItem> {
           quantity: _enteredQuantity,
           category: _selectedCategory);
 
-      groceryService.groceryItemPost(item).then((value) {
-        Navigator.of(context).pop();
+      groceryService.groceryItemPost(item).then((response) {
+        final responseBody = jsonDecode(response.body);
+        if (!context.mounted) {
+          return;
+        }
+        Navigator.of(context).pop(
+          GroceryItem(
+              id: responseBody['name'],
+              name: _enteredName,
+              quantity: _enteredQuantity,
+              category: _selectedCategory),
+        );
       }).catchError((e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

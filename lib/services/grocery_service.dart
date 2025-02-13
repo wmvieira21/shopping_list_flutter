@@ -9,7 +9,7 @@ final Uri url = Uri.https(
 class GroceryService {
   const GroceryService();
 
-  Future<dynamic> groceryItemPost(GroceryItem item) {
+  Future<http.Response> groceryItemPost(GroceryItem item) {
     return http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -19,20 +19,32 @@ class GroceryService {
     );
   }
 
-  Future<List<GroceryItem>> groceryItemGet() {
+  Future<dynamic> deleteGrocery(GroceryItem item) {
+    return http.delete(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(
+        item.toMap(),
+      ),
+    );
+  }
+
+  Future<List<GroceryItem>> get savedGroceries {
     List<GroceryItem> groceries = [];
     return http.get(
       url,
       headers: {'Content-Type': 'application/json'},
     ).then((response) {
-      Map<String, dynamic> shoppingListMap =
-          (jsonDecode(response.body) as Map<String, dynamic>);
+      if (response.body != 'null') {
+        Map<String, dynamic> shoppingListMap =
+            (jsonDecode(response.body) as Map<String, dynamic>);
 
-      shoppingListMap.forEach((id, valueMap) {
-        groceries.add(
-          GroceryItem.toObject(id, valueMap),
-        );
-      });
+        shoppingListMap.forEach((id, valueMap) {
+          groceries.add(
+            GroceryItem.toObject(id, valueMap),
+          );
+        });
+      }
       return groceries;
     });
   }

@@ -18,7 +18,7 @@ class _GroceryHomePageState extends State<GroceryHomePage> {
 
   get loadSavedGroceries {
     _groceriesList.clear();
-    return groceryService.groceryItemGet().then((value) {
+    return groceryService.savedGroceries.then((value) {
       setState(() {
         _groceriesList.addAll(value);
       });
@@ -28,16 +28,23 @@ class _GroceryHomePageState extends State<GroceryHomePage> {
   void _addItem() {
     Navigator.of(context)
         .push<GroceryItem>(
-          MaterialPageRoute(
-            builder: (context) => NewItem(),
-          ),
-        )
-        .then((value) => loadSavedGroceries);
+      MaterialPageRoute(
+        builder: (context) => NewItem(),
+      ),
+    )
+        .then((item) {
+      if (item != null) {
+        setState(() {
+          _groceriesList.add(item);
+        });
+      }
+    });
   }
 
   void _deleteItem(GroceryItem item) {
     setState(() {
       _groceriesList.remove(item);
+      groceryService.deleteGrocery(item);
     });
   }
 
@@ -58,8 +65,10 @@ class _GroceryHomePageState extends State<GroceryHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Your Groceries'),
+        centerTitle: true,
+        toolbarHeight: 70,
         actions: [
-          IconButton.filled(onPressed: _addItem, icon: Icon(Icons.add))
+          IconButton.outlined(onPressed: _addItem, icon: Icon(Icons.add))
         ],
       ),
       body: mainContent,
