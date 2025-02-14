@@ -19,13 +19,16 @@ class GroceryService {
     );
   }
 
-  Future<dynamic> deleteGrocery(GroceryItem item) {
+  Future<http.Response> deleteGrocery(GroceryItem item) {
+    final Uri url = Uri.https(
+        'shoppinglistserver-f1886-default-rtdb.firebaseio.com',
+        'shopping-list/${item.id}.json');
     return http.delete(
       url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(
-        item.toMap(),
-      ),
+      // headers: {'Content-Type': 'application/json'},
+      // body: json.encode(
+      //   item.toMap(),
+      // ),
     );
   }
 

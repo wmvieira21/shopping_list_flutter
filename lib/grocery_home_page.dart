@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:shopping_list/models/grocery_item.dart';
 import 'package:shopping_list/services/grocery_service.dart';
 import 'package:shopping_list/widgets/grocery_list.dart';
@@ -56,9 +57,23 @@ class _GroceryHomePageState extends State<GroceryHomePage> {
   }
 
   void _deleteItem(GroceryItem item) {
+    int index = _groceriesList.indexOf(item);
     setState(() {
       _groceriesList.remove(item);
-      groceryService.deleteGrocery(item);
+    });
+
+    groceryService.deleteGrocery(item).then((response) {
+      if (response.statusCode >= 400) {
+        setState(() {
+          _groceriesList.insert(index, item);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: Duration(seconds: 2),
+            content: Text("Item couldn't be deleted on the server."),
+          ),
+        );
+      }
     });
   }
 
