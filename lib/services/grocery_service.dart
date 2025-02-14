@@ -9,7 +9,7 @@ final Uri url = Uri.https(
 class GroceryService {
   const GroceryService();
 
-  Future<http.Response> groceryItemPost(GroceryItem item) {
+  Future<http.Response> saveGroceryItem(GroceryItem item) {
     return http
         .post(
           url,

@@ -38,7 +38,7 @@ class _NewItemState extends State<NewItem> {
           quantity: _enteredQuantity,
           category: _selectedCategory);
 
-      groceryService.groceryItemPost(item).then((response) {
+      groceryService.saveGroceryItem(item).then((response) {
         final responseBody = jsonDecode(response.body);
         if (!context.mounted) {
           return;
