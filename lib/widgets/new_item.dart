@@ -52,9 +52,13 @@ class _NewItemState extends State<NewItem> {
               category: _selectedCategory),
         );
       }).catchError((e) {
+        setState(() {
+          _isSending = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("An error has occured: ${e.toString()}"),
+            content: Text(
+                "Server couldn't be reached. Check your internet connection."),
           ),
         );
       });

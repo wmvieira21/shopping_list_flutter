@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:shopping_list/models/grocery_item.dart';
 import 'package:shopping_list/services/grocery_service.dart';
 import 'package:shopping_list/widgets/grocery_list.dart';
@@ -27,7 +26,7 @@ class _GroceryHomePageState extends State<GroceryHomePage> {
 
   get loadSavedGroceries {
     _groceriesList.clear();
-    return groceryService.savedGroceries.then((response) {
+    return groceryService.loadGroceries.then((response) {
       setState(() {
         if (response['statusCode'] != null) {
           errorMessage = response['errorMessage'];
@@ -37,6 +36,9 @@ class _GroceryHomePageState extends State<GroceryHomePage> {
         isLoading = false;
         _groceriesList.addAll(response['groceries']);
       });
+    }).catchError((error) {
+      errorMessage =
+          "Server couldn't be reached. Check your internet connection.";
     });
   }
 
@@ -74,6 +76,17 @@ class _GroceryHomePageState extends State<GroceryHomePage> {
           ),
         );
       }
+    }).catchError((error) {
+      setState(() {
+        _groceriesList.insert(index, item);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: 2),
+          content: Text(
+              "Server couldn't be reached. Check your internet connection."),
+        ),
+      );
     });
   }
 

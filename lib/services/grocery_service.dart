@@ -10,29 +10,33 @@ class GroceryService {
   const GroceryService();
 
   Future<http.Response> groceryItemPost(GroceryItem item) {
-    return http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(
-        item.toMap(),
-      ),
-    );
+    return http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(
+            item.toMap(),
+          ),
+        )
+        .catchError((error) => error);
   }
 
   Future<http.Response> deleteGrocery(GroceryItem item) {
     final Uri url = Uri.https(
         'shoppinglistserver-f1886-default-rtdb.firebaseio.com',
         'shopping-list/${item.id}.json');
-    return http.delete(
-      url,
-      // headers: {'Content-Type': 'application/json'},
-      // body: json.encode(
-      //   item.toMap(),
-      // ),
-    );
+    return http
+        .delete(
+          url,
+          // headers: {'Content-Type': 'application/json'},
+          // body: json.encode(
+          //   item.toMap(),
+          // ),
+        )
+        .catchError((error) => error);
   }
 
-  Future<Map<String, dynamic>> get savedGroceries {
+  Future<Map<String, dynamic>> get loadGroceries {
     List<GroceryItem> groceries = [];
     return http.get(
       url,
