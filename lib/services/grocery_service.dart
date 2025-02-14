@@ -29,13 +29,20 @@ class GroceryService {
     );
   }
 
-  Future<List<GroceryItem>> get savedGroceries {
+  Future<Map<String, dynamic>> get savedGroceries {
     List<GroceryItem> groceries = [];
     return http.get(
       url,
       headers: {'Content-Type': 'application/json'},
     ).then((response) {
-      if (response.body != 'null') {
+      if (response.statusCode >= 400) {
+        return {
+          'statusCode': response.statusCode,
+          'errorMessage': "Failed to fetch data. Please try again later."
+        };
+      }
+
+      if (response.body.contains('category')) {
         Map<String, dynamic> shoppingListMap =
             (jsonDecode(response.body) as Map<String, dynamic>);
 
@@ -45,7 +52,7 @@ class GroceryService {
           );
         });
       }
-      return groceries;
-    });
+      return {'groceries': groceries};
+    }).catchError((error) => error);
   }
 }

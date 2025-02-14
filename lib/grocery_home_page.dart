@@ -15,12 +15,26 @@ class GroceryHomePage extends StatefulWidget {
 class _GroceryHomePageState extends State<GroceryHomePage> {
   final List<GroceryItem> _groceriesList = [];
   final GroceryService groceryService = GroceryService();
+  bool isLoading = true;
+  String errorMessage = "";
+
+  @override
+  void initState() {
+    super.initState();
+    loadSavedGroceries;
+  }
 
   get loadSavedGroceries {
     _groceriesList.clear();
-    return groceryService.savedGroceries.then((value) {
+    return groceryService.savedGroceries.then((response) {
       setState(() {
-        _groceriesList.addAll(value);
+        if (response['statusCode'] != null) {
+          errorMessage = response['errorMessage'];
+          return;
+        }
+
+        isLoading = false;
+        _groceriesList.addAll(response['groceries']);
       });
     });
   }
@@ -49,18 +63,24 @@ class _GroceryHomePageState extends State<GroceryHomePage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    loadSavedGroceries;
-  }
-
-  @override
   Widget build(BuildContext context) {
     Widget mainContent = _groceriesList.isEmpty
         ? NoDataFound()
         : GroceryList(
             groceriesList: _groceriesList,
             onDeletingItem: (item) => _deleteItem(item));
+
+    if (isLoading) {
+      mainContent = Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (errorMessage.isNotEmpty) {
+      mainContent = Center(
+        child: Text(errorMessage),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(

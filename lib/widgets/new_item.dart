@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:shopping_list/data/categories.dart';
 import 'package:shopping_list/enum/categories.dart';
 import 'package:shopping_list/models/category.dart';
@@ -19,13 +18,18 @@ class NewItem extends StatefulWidget {
 
 class _NewItemState extends State<NewItem> {
   final _formKey = GlobalKey<FormState>();
+  final GroceryService groceryService = GroceryService();
   String _enteredName = '';
   int _enteredQuantity = 1;
   Category _selectedCategory = categoriesData[Categories.carbs]!;
-  final GroceryService groceryService = GroceryService();
+  bool _isSending = false;
 
   void _onSave() {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSending = true;
+      });
+
       _formKey.currentState!.save();
 
       GroceryItem item = GroceryItem(
@@ -141,12 +145,20 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => _formKey.currentState!.reset(),
+                    onPressed: _isSending
+                        ? null
+                        : () => _formKey.currentState!.reset(),
                     child: Text('Reset'),
                   ),
                   ElevatedButton(
-                    onPressed: _onSave,
-                    child: Text("Add Item"),
+                    onPressed: _isSending ? null : _onSave,
+                    child: _isSending
+                        ? SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(),
+                          )
+                        : Text("Add Item"),
                   )
                 ],
               )
