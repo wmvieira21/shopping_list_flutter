@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shopping_list/models/grocery_item.dart';
 import 'package:shopping_list/services/grocery_service.dart';
@@ -13,32 +14,33 @@ class GroceryHomePage extends StatefulWidget {
 }
 
 class _GroceryHomePageState extends State<GroceryHomePage> {
-  final List<GroceryItem> _groceriesList = [];
   final GroceryService groceryService = GroceryService();
-  bool isLoading = true;
-  String errorMessage = "";
+  late Future<List<GroceryItem>> _loadedItems;
 
   @override
   void initState() {
     super.initState();
-    loadSavedGroceries;
+    _loadedItems = loadSavedGroceries;
   }
 
-  get loadSavedGroceries {
-    _groceriesList.clear();
+  Future<List<GroceryItem>> get loadSavedGroceries {
+    List<GroceryItem> loadedList = [];
     return groceryService.loadGroceries.then((response) {
-      setState(() {
-        if (response['statusCode'] != null) {
-          errorMessage = response['errorMessage'];
-          return;
-        }
+      if (response.statusCode >= 400) {
+        throw Exception("Failed to fetch data. Please try again later.");
+      }
 
-        isLoading = false;
-        _groceriesList.addAll(response['groceries']);
-      });
-    }).catchError((error) {
-      errorMessage =
-          "Server couldn't be reached. Check your internet connection.";
+      if (response.body.contains('category')) {
+        Map<String, dynamic> shoppingListMap =
+            (jsonDecode(response.body) as Map<String, dynamic>);
+
+        shoppingListMap.forEach((id, valueMap) {
+          loadedList.add(
+            GroceryItem.toObject(id, valueMap),
+          );
+        });
+      }
+      return loadedList;
     });
   }
 
@@ -52,64 +54,37 @@ class _GroceryHomePageState extends State<GroceryHomePage> {
         .then((item) {
       if (item != null) {
         setState(() {
-          _groceriesList.add(item);
+          _loadedItems = loadSavedGroceries;
         });
       }
     });
   }
 
   void _deleteItem(GroceryItem item) {
-    int index = _groceriesList.indexOf(item);
-    setState(() {
-      _groceriesList.remove(item);
-    });
-
     groceryService.deleteGrocery(item).then((response) {
       if (response.statusCode >= 400) {
-        setState(() {
-          _groceriesList.insert(index, item);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            duration: Duration(seconds: 2),
-            content: Text("Item couldn't be deleted on the server."),
-          ),
-        );
+        _showErrorSnackbar("Item couldn't be deleted on the server.");
       }
-    }).catchError((error) {
       setState(() {
-        _groceriesList.insert(index, item);
+        _loadedItems = loadSavedGroceries;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: Duration(seconds: 2),
-          content: Text(
-              "Server couldn't be reached. Check your internet connection."),
-        ),
-      );
+    }).catchError((error) {
+      _showErrorSnackbar(
+          "Server couldn't be reached. Check your internet connection.");
     });
+  }
+
+  _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: Duration(seconds: 2),
+        content: Text(message),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget mainContent = _groceriesList.isEmpty
-        ? NoDataFound()
-        : GroceryList(
-            groceriesList: _groceriesList,
-            onDeletingItem: (item) => _deleteItem(item));
-
-    if (isLoading) {
-      mainContent = Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    if (errorMessage.isNotEmpty) {
-      mainContent = Center(
-        child: Text(errorMessage),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Your Groceries'),
@@ -119,7 +94,20 @@ class _GroceryHomePageState extends State<GroceryHomePage> {
           IconButton.outlined(onPressed: _addItem, icon: Icon(Icons.add))
         ],
       ),
-      body: mainContent,
+      body: FutureBuilder(
+          future: _loadedItems,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text(snapshot.error.toString()));
+            } else if (snapshot.data!.isEmpty) {
+              return NoDataFound();
+            }
+            return GroceryList(
+                groceriesList: snapshot.data!,
+                onDeletingItem: (item) => _deleteItem(item));
+          }),
     );
   }
 }
